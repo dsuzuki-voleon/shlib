@@ -1,3 +1,4 @@
+"""SHLIB Module"""
 __version__ = '1.1.0'
 __released__ = '2019-03-21'
 
