@@ -37,3 +37,7 @@ htmlcov
 
 #Mr Developer
 .mr.developer.cfg
+
+#pycharrm and venv
+.idea
+venv*

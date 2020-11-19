@@ -1,3 +1,4 @@
+"""
 # shlib -- Scripting utilities
 #
 # A light-weight package with few dependencies that allows users to do
@@ -18,7 +19,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
-
+"""
 __version__ = '1.1.0'
 __released__ = '2019-03-21'
 
@@ -27,18 +28,19 @@ try:
     from .extended_pathlib import Path
 except ImportError:
     from pathlib import Path
-from six import string_types
 import itertools
 import shutil
 import errno
 import os
-
+from six import string_types
+# pylint: disable=too-many-lines
 # Parameters {{{1
 PREFERENCES = dict(
-    encoding = 'utf-8',
-    log_cmd = False,
-    use_inform = False,
+    encoding='utf-8',
+    log_cmd=False,
+    use_inform=False,
 )
+
 
 # Utilities {{{1
 # is_str {{{2
@@ -51,9 +53,9 @@ def is_str(obj):
 def is_iterable(obj):
     """Identifies objects that can be iterated over, including strings."""
     import collections
-    try: # python3
+    try:  # python3
         from collections.abc import Iterable
-    except ImportError: # python2
+    except ImportError:  # python2
         from collections import Iterable
     return isinstance(obj, Iterable)
 
@@ -66,6 +68,7 @@ def is_collection(obj):
 
 # to_path {{{2
 def to_path(*args):
+    """to_path"""
     try:
         return Path(*args).expanduser()
     except AttributeError:
@@ -81,18 +84,26 @@ def to_paths(args):
                 yield to_path(each)
         else:
             yield to_path(arg)
- 
+
 
 # to_str {{{2
 def to_str(path):
-    # first convert to path to assure ~ expansion is done, then convert back to 
+    """ first convert to path to assure ~ expansion is done, then convert back to
     # string.
+    """
     return str(to_path(path))
 
 
 # raise_os_error {{{2
 # Raise an error based on the errno.
 def raise_os_error(errno, filename=None):
+    """
+    # raise_os_error {{{2
+    # Raise an error based on the errno.
+    :param errno:
+    :param filename:
+    :return:
+    """
     if filename:
         raise OSError(errno, os.strerror(errno), str(filename))
     else:
@@ -101,6 +112,11 @@ def raise_os_error(errno, filename=None):
 
 # split_cmd {{{2
 def split_cmd(cmd):
+    """
+    # split_cmd {{{2
+    :param cmd:
+    :return:
+    """
     from shlex import split
     return split(cmd)
 
@@ -116,6 +132,11 @@ def quote_arg(arg):
             import re
         except ImportError:
             def quote(arg):
+                """
+                Quote method.
+                :param arg:
+                :return:
+                """
                 if not arg:
                     return "''"
                 if re.search(r'[^\w@%+=:,./-]', arg, re.ASCII) is None:
@@ -148,11 +169,22 @@ def set_prefs(**kwargs):
     """
     PREFERENCES.update(kwargs)
 
+
 # SHLib state
 def get_state():
+    """
+    # SHLib state
+    :return:
+    """
     return PREFERENCES
 
+
 def set_state(state):
+    """
+    Set State method
+    :param state:
+    :return:
+    """
     global PREFERENCES
     old_state = PREFERENCES
     PREFERENCES = state
@@ -214,7 +246,6 @@ def mv(*paths):
         shutil.move(to_str(src), to_str(dest))
 
 
-
 # rm {{{2
 def rm(*paths):
     "Remove files or directories (equivalent to rm -rf)"
@@ -258,8 +289,8 @@ def mkdir(*paths):
     for path in to_paths(paths):
         try:
             path.mkdir(parents=True)
-                # older versions of pathlib ignore exist_ok
-                # in Python3.5, just add exist_ok=True to arg list
+            # older versions of pathlib ignore exist_ok
+            # in Python3.5, just add exist_ok=True to arg list
         # commented out version is suitable for Python3 only
         # except FileExistsError:
         #     if path.is_file():
@@ -271,7 +302,9 @@ def mkdir(*paths):
 
 # mount/umount {{{2
 class mount:
-
+    """
+    # mount/umount {{{2
+    """
     def __init__(self, path):
         self.path = to_path(path)
         self.mounted_externally = is_mounted(self.path)
@@ -286,16 +319,30 @@ class mount:
         if not self.mounted_externally:
             umount(self.path)
 
+
 def umount(path):
+    """
+    Umount method.
+    :param path:
+    :return:
+    """
     Run(['umount', path])
 
 
 def is_mounted(path):
+    """
+    is_mounted
+    :param path:
+    :return:
+    """
     return Run(['mountpoint', '-q', path], '0,1').status == 0
 
 
 # cd {{{2
 class cd:
+    """
+    # cd {{{2
+    """
     def __init__(self, path):
         self.starting_dir = cwd()
         os.chdir(to_str(path))
@@ -369,13 +416,18 @@ def ls(*paths, **kwargs):
     """
     select = kwargs.get('select', '*')
     reject = kwargs.get('reject', '\0')
-        # KSK: I have used '\0' as the default reject pattern because using ''
-        # generates an exception. I put in an enhancement request to the pathlib
-        # team to fix this, but it was rejected.
+    # KSK: I have used '\0' as the default reject pattern because using ''
+    # generates an exception. I put in an enhancement request to the pathlib
+    # team to fix this, but it was rejected.
     only = kwargs.get('only')
     hidden = kwargs.get('hidden')
 
     def acceptable(path):
+        """
+        acceptable
+        :param path:
+        :return:
+        """
         if only == 'file' and not path.is_file():
             return False
         if only == 'dir' and not path.is_dir():
@@ -507,6 +559,7 @@ def cartesian_product(*fragments):
 try:
     from braceexpand import braceexpand
 
+
     def brace_expand(pattern):
         """Bash-style brace expansion"""
         for path in braceexpand(pattern):
@@ -552,8 +605,8 @@ class Cmd(object):
 
     # __init__ {{{3
     def __init__(
-        self, cmd, modes=None, env=None, encoding=None,
-        log=None, option_args=None
+            self, cmd, modes=None, env=None, encoding=None,
+            log=None, option_args=None
     ):
         self.cmd = cmd
         self.env = env
@@ -568,24 +621,35 @@ class Cmd(object):
         self.option_args = option_args
         self._interpret_modes(modes)
 
-
     # _interpret_modes {{{3
     def _interpret_modes(self, modes):
         accept = ''
         if modes:
             for i in range(len(modes)):
                 mode = modes[i]
-                if   mode == 's': self.use_shell = False
-                elif mode == 'S': self.use_shell = True
-                elif mode == 'o': self.save_stdout = False
-                elif mode == 'O': self.save_stdout = True
-                elif mode == 'e': self.save_stderr = False
-                elif mode == 'E': self.save_stderr = True
-                elif mode == 'm': self.merge_stderr_into_stdout = False
-                elif mode == 'M': self.merge_stderr_into_stdout = True
-                elif mode == 'w': self.wait_for_termination = False
-                elif mode == 'W': self.wait_for_termination = True
-                else: accept = modes[i:]; break
+                if mode == 's':
+                    self.use_shell = False
+                elif mode == 'S':
+                    self.use_shell = True
+                elif mode == 'o':
+                    self.save_stdout = False
+                elif mode == 'O':
+                    self.save_stdout = True
+                elif mode == 'e':
+                    self.save_stderr = False
+                elif mode == 'E':
+                    self.save_stderr = True
+                elif mode == 'm':
+                    self.merge_stderr_into_stdout = False
+                elif mode == 'M':
+                    self.merge_stderr_into_stdout = True
+                elif mode == 'w':
+                    self.wait_for_termination = False
+                elif mode == 'W':
+                    self.wait_for_termination = True
+                else:
+                    accept = modes[i:]
+                    break
         self.accept = _Accept(accept)
 
     # run {{{3
@@ -633,9 +697,9 @@ class Cmd(object):
             if PREFERENCES['use_inform']:
                 from inform import Error, os_error
                 raise Error(
-                    msg = os_error(e),
-                    cmd = render_command(self.cmd),
-                    template = '{msg}'
+                    msg=os_error(e),
+                    cmd=render_command(self.cmd),
+                    template='{msg}'
                 )
             else:
                 raise
@@ -724,12 +788,12 @@ class Cmd(object):
             if PREFERENCES['use_inform']:
                 from inform import Error
                 raise Error(
-                    msg = msg,
-                    status = self.status,
-                    stdout = self.stdout.rstrip() if self.stdout else None,
-                    stderr = self.stderr.rstrip() if self.stderr else None,
-                    cmd = render_command(self.cmd),
-                    template = '{msg}'
+                    msg=msg,
+                    status=self.status,
+                    stdout=self.stdout.rstrip() if self.stdout else None,
+                    stderr=self.stderr.rstrip() if self.stderr else None,
+                    cmd=render_command(self.cmd),
+                    template='{msg}'
                 )
             else:
                 raise OSError(None, msg)
@@ -737,15 +801,19 @@ class Cmd(object):
 
     # kill {{{3
     def kill(self):
+        """
+        # kill {{{3
+        :return:
+        """
         self.process.kill()
         self.process.wait()
 
     # __str__ {{{3
     def __str__(self):
+        """# __str__ {{{3"""
         if is_str(self.cmd):
             return self.cmd
-        else:
-            return ' '.join(str(c) for c in self.cmd)
+        return ' '.join(str(c) for c in self.cmd)
 
 
 # Run class {{{2
@@ -763,9 +831,10 @@ class Run(Cmd):
        Run command and capture stdout; merge stderr into stdout:
            output = Run(['grep', filename], modes='sOMW1').stdout
     """
+
     def __init__(
-        self, cmd, modes=None, stdin=None, env=None, encoding=None,
-        log=None, option_args=None
+            self, cmd, modes=None, stdin=None, env=None, encoding=None,
+            log=None, option_args=None
     ):
         self.cmd = cmd
         self.stdin = None
@@ -791,9 +860,10 @@ class Sh(Cmd):
     Sh() is the same as Run except S mode is default.
     Default mode is 'SoeW0'.
     """
+
     def __init__(
-        self, cmd, modes=None, stdin=None, env=None, encoding=None,
-        log=None, option_args=None
+            self, cmd, modes=None, stdin=None, env=None, encoding=None,
+            log=None, option_args=None
     ):
         self.cmd = cmd
         self.stdin = None
@@ -819,9 +889,10 @@ class Start(Cmd):
     specify O or E modes, those streams are suppressed rather than being
     captured.
     """
+
     def __init__(
-        self, cmd, modes=None, stdin=None, env=None, encoding=None,
-        log=None, option_args=None
+            self, cmd, modes=None, stdin=None, env=None, encoding=None,
+            log=None, option_args=None
     ):
         self.cmd = cmd
         self.stdin = None
@@ -866,12 +937,12 @@ class _Accept(object):
         self.accept = accept
 
     def unacceptable(self, status):
+        """unacceptable"""
         if self.accept is True:
             return False
         elif type(self.accept) is tuple:
             return status not in self.accept
-        else:
-            return status < 0 or status > self.accept
+        return status < 0 or status > self.accept
 
 
 # run (deprecated) {{{2
