@@ -33,7 +33,7 @@ import shutil
 import errno
 import os
 from six import string_types
-
+# pylint: disable=too-many-lines
 # Parameters {{{1
 PREFERENCES = dict(
     encoding='utf-8',
